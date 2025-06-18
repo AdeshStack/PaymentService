@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service-app
+  labels:
+    app: payment-service-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service-app
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: payment-service-app
+    spec:
+      containers:
+      - name: payment-service-app
+        image: adeshprime17/paymentservicefork8s:0.0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8083
+        env:
+        - name: EUREKA_SERVER_ADDRESS
+          valueFrom:
+            configMapKeyRef:
+              key: eureka_service_address
+              name: eureka-cm
+        - name: CONFIG_SERVER_URL
+          valueFrom:
+            configMapKeyRef:
+              key: config_url
+              name: config-cm
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              key: hostname
+              name: mysql-cm  
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name:  payment-service-svc
+spec:
+  selector:
+    app:  payment-service-app
+  
+  ports:
+  - port:  80
+    targetPort:  8083               
+       
